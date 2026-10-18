@@ -1,0 +1,28 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "configure" ]; then
+    # Close Settings so it picks up the new bundle immediately
+    killall -9 Preferences 2>/dev/null || true
+
+    # Tell Cydia / Sileo / Zebra to prompt for Respring
+    if [ -n "$CYDIA" ]; then
+        cydia_fd=$(echo "$CYDIA" | cut -d' ' -f1)
+        if [ -n "$cydia_fd" ]; then
+            eval "echo 'finish:restart' >&$cydia_fd" 2>/dev/null || true
+        fi
+    fi
+
+    # CLI fallback
+    if [ -z "$CYDIA" ] && [ -t 1 ]; then
+        if [ -x "/var/jb/usr/bin/sbreload" ]; then
+            /var/jb/usr/bin/sbreload 2>/dev/null || killall -9 SpringBoard 2>/dev/null || true
+        elif command -v sbreload >/dev/null 2>&1; then
+            sbreload 2>/dev/null || killall -9 SpringBoard 2>/dev/null || true
+        else
+            killall -9 SpringBoard 2>/dev/null || true
+        fi
+    fi
+fi
+
+exit 0

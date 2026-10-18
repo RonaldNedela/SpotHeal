@@ -1,0 +1,470 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>title</key>
+	<string>SpotHeal</string>
+	<key>entry</key>
+	<dict>
+		<key>cell</key>
+		<string>PSLinkCell</string>
+		<key>icon</key>
+		<string>SpotHeal.png</string>
+		<key>label</key>
+		<string>SpotHeal</string>
+		<key>bundle</key>
+		<string>SpotHeal</string>
+		<key>isController</key>
+		<true/>
+		<key>detail</key>
+		<string>SpotHealRootListController</string>
+	</dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>Subtractive luminance compensation mask for iPad display hotspots (white spots above Home button).</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.ronci.spotheal</string>
+			<key>key</key>
+			<string>enabled</string>
+			<key>label</key>
+			<string>Enabled</string>
+			<key>PostNotification</key>
+			<string>com.ronci.spotheal/prefsChanged</string>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Calibration &amp; Alignment</string>
+			<key>footerText</key>
+			<string>Turn on Highlight Mask to show a visible red oval with a crosshair. Adjust position and size until the red target matches the defect, then turn Highlight off.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.ronci.spotheal</string>
+			<key>key</key>
+			<string>highlightMode</string>
+			<key>label</key>
+			<string>Highlight Mask (Red)</string>
+			<key>PostNotification</key>
+			<string>com.ronci.spotheal/prefsChanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>action</key>
+			<string>openWhiteTestScreen</string>
+			<key>label</key>
+			<string>Test on White Screen</string>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Distance from Home Button (20 - 350 pt)</string>
+			<key>footerText</key>
+			<string>Distance in points from the physical Home button edge toward the screen center.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>id</key>
+			<string>offsetY_slider</string>
+			<key>default</key>
+			<real>120.0</real>
+			<key>defaults</key>
+			<string>com.ronci.spotheal</string>
+			<key>key</key>
+			<string>offsetY</string>
+			<key>min</key>
+			<real>20.0</real>
+			<key>max</key>
+			<real>350.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>isContinuous</key>
+			<true/>
+			<key>continuous</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.ronci.spotheal/prefsChanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSEditTextCell</string>
+			<key>id</key>
+			<string>offsetY_text</string>
+			<key>default</key>
+			<string>120</string>
+			<key>defaults</key>
+			<string>com.ronci.spotheal</string>
+			<key>key</key>
+			<string>offsetY</string>
+			<key>label</key>
+			<string>Distance (pt)</string>
+			<key>placeholder</key>
+			<string>20 - 350</string>
+			<key>isNumeric</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.ronci.spotheal/prefsChanged</string>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Horizontal Shift (-150 to +150 pt)</string>
+			<key>footerText</key>
+			<string>Shift left or right along the Home button axis.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>id</key>
+			<string>offsetX_slider</string>
+			<key>default</key>
+			<real>0.0</real>
+			<key>defaults</key>
+			<string>com.ronci.spotheal</string>
+			<key>key</key>
+			<string>offsetX</string>
+			<key>min</key>
+			<real>-150.0</real>
+			<key>max</key>
+			<real>150.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>isContinuous</key>
+			<true/>
+			<key>continuous</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.ronci.spotheal/prefsChanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSEditTextCell</string>
+			<key>id</key>
+			<string>offsetX_text</string>
+			<key>default</key>
+			<string>0</string>
+			<key>defaults</key>
+			<string>com.ronci.spotheal</string>
+			<key>key</key>
+			<string>offsetX</string>
+			<key>label</key>
+			<string>Shift (pt)</string>
+			<key>placeholder</key>
+			<string>-150 - 150</string>
+			<key>isNumeric</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.ronci.spotheal/prefsChanged</string>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Spot Width (10 - 200 pt)</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>id</key>
+			<string>radiusX_slider</string>
+			<key>default</key>
+			<real>45.0</real>
+			<key>defaults</key>
+			<string>com.ronci.spotheal</string>
+			<key>key</key>
+			<string>radiusX</string>
+			<key>min</key>
+			<real>10.0</real>
+			<key>max</key>
+			<real>200.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>isContinuous</key>
+			<true/>
+			<key>continuous</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.ronci.spotheal/prefsChanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSEditTextCell</string>
+			<key>id</key>
+			<string>radiusX_text</string>
+			<key>default</key>
+			<string>45</string>
+			<key>defaults</key>
+			<string>com.ronci.spotheal</string>
+			<key>key</key>
+			<string>radiusX</string>
+			<key>label</key>
+			<string>Width (pt)</string>
+			<key>placeholder</key>
+			<string>10 - 200</string>
+			<key>isNumeric</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.ronci.spotheal/prefsChanged</string>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Spot Height (10 - 200 pt)</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>id</key>
+			<string>radiusY_slider</string>
+			<key>default</key>
+			<real>45.0</real>
+			<key>defaults</key>
+			<string>com.ronci.spotheal</string>
+			<key>key</key>
+			<string>radiusY</string>
+			<key>min</key>
+			<real>10.0</real>
+			<key>max</key>
+			<real>200.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>isContinuous</key>
+			<true/>
+			<key>continuous</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.ronci.spotheal/prefsChanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSEditTextCell</string>
+			<key>id</key>
+			<string>radiusY_text</string>
+			<key>default</key>
+			<string>45</string>
+			<key>defaults</key>
+			<string>com.ronci.spotheal</string>
+			<key>key</key>
+			<string>radiusY</string>
+			<key>label</key>
+			<string>Height (pt)</string>
+			<key>placeholder</key>
+			<string>10 - 200</string>
+			<key>isNumeric</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.ronci.spotheal/prefsChanged</string>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Darkening Intensity (1% - 40%)</string>
+			<key>footerText</key>
+			<string>Optical attenuation level. Dial this in until the defect matches ambient display luminance.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>id</key>
+			<string>intensity_slider</string>
+			<key>default</key>
+			<real>12.0</real>
+			<key>defaults</key>
+			<string>com.ronci.spotheal</string>
+			<key>key</key>
+			<string>intensity</string>
+			<key>min</key>
+			<real>1.0</real>
+			<key>max</key>
+			<real>40.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>isContinuous</key>
+			<true/>
+			<key>continuous</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.ronci.spotheal/prefsChanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSEditTextCell</string>
+			<key>id</key>
+			<string>intensity_text</string>
+			<key>default</key>
+			<string>12.0</string>
+			<key>defaults</key>
+			<string>com.ronci.spotheal</string>
+			<key>key</key>
+			<string>intensity</string>
+			<key>label</key>
+			<string>Intensity (%)</string>
+			<key>placeholder</key>
+			<string>1.0 - 40.0</string>
+			<key>isNumeric</key>
+			<true/>
+			<key>isDecimal</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.ronci.spotheal/prefsChanged</string>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Edge Softness (0.5 - 2.5)</string>
+			<key>footerText</key>
+			<string>Controls the radial gradient feathering curve.</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>id</key>
+			<string>softness_slider</string>
+			<key>default</key>
+			<real>1.0</real>
+			<key>defaults</key>
+			<string>com.ronci.spotheal</string>
+			<key>key</key>
+			<string>softness</string>
+			<key>min</key>
+			<real>0.5</real>
+			<key>max</key>
+			<real>2.5</real>
+			<key>showValue</key>
+			<true/>
+			<key>isContinuous</key>
+			<true/>
+			<key>continuous</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.ronci.spotheal/prefsChanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSEditTextCell</string>
+			<key>id</key>
+			<string>softness_text</string>
+			<key>default</key>
+			<string>1.0</string>
+			<key>defaults</key>
+			<string>com.ronci.spotheal</string>
+			<key>key</key>
+			<string>softness</string>
+			<key>label</key>
+			<string>Softness</string>
+			<key>placeholder</key>
+			<string>0.5 - 2.5</string>
+			<key>isNumeric</key>
+			<true/>
+			<key>isDecimal</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.ronci.spotheal/prefsChanged</string>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Color Tint (-50 Cool to +50 Warm)</string>
+			<key>footerText</key>
+			<string>Shift color balance if the hotspot has a slight color fringing (negative = cooler slate, positive = warmer amber).</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>id</key>
+			<string>colorTint_slider</string>
+			<key>default</key>
+			<real>0.0</real>
+			<key>defaults</key>
+			<string>com.ronci.spotheal</string>
+			<key>key</key>
+			<string>colorTint</string>
+			<key>min</key>
+			<real>-50.0</real>
+			<key>max</key>
+			<real>50.0</real>
+			<key>showValue</key>
+			<true/>
+			<key>isContinuous</key>
+			<true/>
+			<key>continuous</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.ronci.spotheal/prefsChanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSEditTextCell</string>
+			<key>id</key>
+			<string>colorTint_text</string>
+			<key>default</key>
+			<string>0</string>
+			<key>defaults</key>
+			<string>com.ronci.spotheal</string>
+			<key>key</key>
+			<string>colorTint</string>
+			<key>label</key>
+			<string>Tint</string>
+			<key>placeholder</key>
+			<string>-50 - 50</string>
+			<key>isNumeric</key>
+			<true/>
+			<key>PostNotification</key>
+			<string>com.ronci.spotheal/prefsChanged</string>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>action</key>
+			<string>resetDefaults</string>
+			<key>label</key>
+			<string>Reset to Defaults</string>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>SpotHeal dynamically tracks screen rotation so the compensation mask stays physically locked to the hardware defect above the Home button.
+
+SpotHeal v1.0.0 • Developed by Ronci</string>
+		</dict>
+	</array>
+</dict>
+</plist>
