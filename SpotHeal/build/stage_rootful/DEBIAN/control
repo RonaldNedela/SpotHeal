@@ -1,6 +1,6 @@
 Package: com.ronci.spotheal
 Name: SpotHeal
-Version: 1.0.0
+Version: 1.0.1
 Architecture: iphoneos-arm
 Description: Subtractive luminance compensation mask for iPad display hotspots (white spots above Home button).
 Maintainer: Ronci

@@ -463,7 +463,7 @@
 			<key>footerText</key>
 			<string>SpotHeal dynamically tracks screen rotation so the compensation mask stays physically locked to the hardware defect above the Home button.
 
-SpotHeal v1.0.0 • Developed by Ronci</string>
+SpotHeal v1.0.1 • Developed by Ronci</string>
 		</dict>
 	</array>
 </dict>

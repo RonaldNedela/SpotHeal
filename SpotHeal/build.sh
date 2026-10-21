@@ -67,7 +67,7 @@ mkdir -p "${STAGE_ROOTLESS}/var/jb/Library/PreferenceBundles/SpotHeal.bundle"
 cat << 'EOF' > "${STAGE_ROOTLESS}/DEBIAN/control"
 Package: com.ronci.spotheal
 Name: SpotHeal
-Version: 1.0.0
+Version: 1.0.1
 Architecture: iphoneos-arm64
 Description: Subtractive luminance compensation mask for iPad display hotspots (white spots above Home button).
 Maintainer: Ronci
@@ -155,7 +155,7 @@ cp "${SCRIPT_DIR}/src/pref_bundle/Resources/Root.plist" "${STAGE_ROOTLESS}/var/j
 cp "${SCRIPT_DIR}/src/pref_bundle/Resources/Root.plist" "${STAGE_ROOTLESS}/var/jb/Library/PreferenceBundles/SpotHeal.bundle/SpotHeal.plist"
 cp "${SCRIPT_DIR}/src/pref_bundle/Resources/"*.png "${STAGE_ROOTLESS}/var/jb/Library/PreferenceBundles/SpotHeal.bundle/"
 
-ROOTLESS_DEB="${BUILD_DIR}/com.ronci.spotheal_1.0.0_iphoneos-arm64.deb"
+ROOTLESS_DEB="${BUILD_DIR}/com.ronci.spotheal_1.0.1_iphoneos-arm64.deb"
 "${DPKG_DEB}" --root-owner-group -b -Zgzip "${STAGE_ROOTLESS}" "${ROOTLESS_DEB}"
 echo "Rootless DEB built: ${ROOTLESS_DEB}"
 
@@ -172,7 +172,7 @@ mkdir -p "${STAGE_ROOTFUL}/Library/PreferenceBundles/SpotHeal.bundle"
 cat << 'EOF' > "${STAGE_ROOTFUL}/DEBIAN/control"
 Package: com.ronci.spotheal
 Name: SpotHeal
-Version: 1.0.0
+Version: 1.0.1
 Architecture: iphoneos-arm
 Description: Subtractive luminance compensation mask for iPad display hotspots (white spots above Home button).
 Maintainer: Ronci
@@ -253,7 +253,7 @@ cp "${SCRIPT_DIR}/src/pref_bundle/Resources/Root.plist" "${STAGE_ROOTFUL}/Librar
 cp "${SCRIPT_DIR}/src/pref_bundle/Resources/Root.plist" "${STAGE_ROOTFUL}/Library/PreferenceBundles/SpotHeal.bundle/SpotHeal.plist"
 cp "${SCRIPT_DIR}/src/pref_bundle/Resources/"*.png "${STAGE_ROOTFUL}/Library/PreferenceBundles/SpotHeal.bundle/"
 
-ROOTFUL_DEB="${BUILD_DIR}/com.ronci.spotheal_1.0.0_iphoneos-arm.deb"
+ROOTFUL_DEB="${BUILD_DIR}/com.ronci.spotheal_1.0.1_iphoneos-arm.deb"
 "${DPKG_DEB}" --root-owner-group -b -Zgzip "${STAGE_ROOTFUL}" "${ROOTFUL_DEB}"
 echo "Rootful DEB built: ${ROOTFUL_DEB}"
 
@@ -262,6 +262,6 @@ cp "${ROOTLESS_DEB}" "${DOWNLOADS_DIR}/"
 cp "${ROOTFUL_DEB}" "${DOWNLOADS_DIR}/"
 
 echo "=== Packaging Complete ==="
-echo "Rootless: ${DOWNLOADS_DIR}/com.ronci.spotheal_1.0.0_iphoneos-arm64.deb"
-echo "Rootful:  ${DOWNLOADS_DIR}/com.ronci.spotheal_1.0.0_iphoneos-arm.deb"
-ls -la "${DOWNLOADS_DIR}/com.ronci.spotheal_1.0.0_iphoneos-"*.deb
+echo "Rootless: ${DOWNLOADS_DIR}/com.ronci.spotheal_1.0.1_iphoneos-arm64.deb"
+echo "Rootful:  ${DOWNLOADS_DIR}/com.ronci.spotheal_1.0.1_iphoneos-arm.deb"
+ls -la "${DOWNLOADS_DIR}/com.ronci.spotheal_1.0.1_iphoneos-"*.deb

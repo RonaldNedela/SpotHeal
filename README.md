@@ -75,11 +75,23 @@ SpotHeal neutralizes the hotspot purely in software at the compositor level thro
 ### Package Deployment
 1. Download the Debian package matching your bootstrap:
    - **Rootless (Dopamine / palera1n rootless):**  
-     `com.ronci.spotheal_1.0.0_iphoneos-arm64.deb`
+     `com.ronci.spotheal_1.0.1_iphoneos-arm64.deb`
    - **Rootful (checkra1n / unc0ver / Taurine):**  
-     `com.ronci.spotheal_1.0.0_iphoneos-arm.deb`
+     `com.ronci.spotheal_1.0.1_iphoneos-arm.deb`
 2. Install via Sileo, Zebra, or Filza.
 3. Perform a respring.
+
+---
+
+## Performance and Resource Optimization (v1.0.1)
+
+In v1.0.0, the radial gradient mask was rendered across a full-screen `UIView` with `UIViewContentModeRedraw`. On high-resolution displays (such as the 2224x1668 iPad Pro 10.5" canvas), this required allocating a 14.8 MB (up to 30 MB double-buffered) software bitmap backing store and re-evaluating trigonometric falloff algorithms across millions of pixels on every rotation event.
+
+In v1.0.1, the rendering pipeline was completely redesigned:
+- **Localized Geometry Backing Store**: The full-screen overlay view has been stripped of software backing store allocation (`opaque = NO`, `clearColor`). Attenuation rendering is now confined strictly to a localized micro-view (`SpotDefectDotView`) sized precisely to `(2 * radiusX) x (2 * radiusY)` points (~90x90 pt at nominal settings).
+- **99.78% Memory Footprint Reduction**: Backing buffer memory dropped from 14.8 MB to ~32 KB.
+- **Zero-CPU Hardware Rotation Handling**: When the device rotates, interface orientation updates only translate the subview's `center` coordinates on the GPU compositor. Zero CPU gradient re-rasterization occurs during rotation or scrolling.
+- **Notification Debouncing**: Eliminated redundant multi-stage redraw dispatches on device orientation and status bar updates.
 
 ---
 
@@ -114,7 +126,7 @@ Pipeline tasks:
 1. Compiles `SpotHeal.dylib` for `SpringBoard` with entitlement signing via `ldid -S`.
 2. Compiles the `SpotHeal` PreferenceBundle against the private Preferences framework.
 3. Generates multi-scale application icons.
-4. Packages `com.ronci.spotheal_1.0.0_iphoneos-arm64.deb` and `com.ronci.spotheal_1.0.0_iphoneos-arm.deb`.
+4. Packages `com.ronci.spotheal_1.0.1_iphoneos-arm64.deb` and `com.ronci.spotheal_1.0.1_iphoneos-arm.deb`.
 
 ---
 
@@ -124,8 +136,8 @@ Pipeline tasks:
 SpotHeal/
 ├── build.sh                                # Automated build script
 ├── README.md                               # Technical documentation
-├── com.ronci.spotheal_1.0.0_iphoneos-arm.deb   # Pre-compiled rootful package
-├── com.ronci.spotheal_1.0.0_iphoneos-arm64.deb # Pre-compiled rootless package
+├── com.ronci.spotheal_1.0.1_iphoneos-arm.deb   # Pre-compiled rootful package
+├── com.ronci.spotheal_1.0.1_iphoneos-arm64.deb # Pre-compiled rootless package
 └── src/
     ├── SpotHeal.m                          # SpringBoard hook and rotation transform engine
     ├── SpotHeal.plist                      # MobileSubstrate filter

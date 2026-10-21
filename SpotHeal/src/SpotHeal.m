@@ -21,9 +21,155 @@ static void updateWindowFrames(void);
 static void setupOverlayIfReady(void);
 static void reloadPreferences(void);
 
+#pragma mark - SpotDefectDotView
+
+@interface SpotDefectDotView : UIView
+@property (nonatomic, assign) CGFloat radiusX;
+@property (nonatomic, assign) CGFloat radiusY;
+@property (nonatomic, assign) CGFloat intensity;
+@property (nonatomic, assign) CGFloat softness;
+@property (nonatomic, assign) CGFloat colorTint;
+@property (nonatomic, assign) BOOL highlightMode;
+@end
+
+@implementation SpotDefectDotView
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.backgroundColor = [UIColor clearColor];
+        self.userInteractionEnabled = NO;
+        self.opaque = NO;
+        self.contentMode = UIViewContentModeRedraw;
+    }
+    return self;
+}
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    (void)point; (void)event;
+    return nil;
+}
+
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event {
+    (void)point; (void)event;
+    return NO;
+}
+
+- (void)drawRect:(CGRect)rect {
+    (void)rect;
+    if (self.hidden || self.alpha <= 0.001) return;
+    
+    CGRect bounds = self.bounds;
+    CGFloat W = bounds.size.width;
+    CGFloat H = bounds.size.height;
+    if (W <= 0 || H <= 0) return;
+    
+    CGContextRef ctx = UIGraphicsGetCurrentContext();
+    if (!ctx) return;
+    
+    CGFloat cx = W / 2.0;
+    CGFloat cy = H / 2.0;
+    CGFloat rx = self.radiusX;
+    CGFloat ry = self.radiusY;
+    if (rx <= 1.0) rx = 1.0;
+    if (ry <= 1.0) ry = 1.0;
+    
+    if (self.highlightMode) {
+        CGContextSaveGState(ctx);
+        CGContextTranslateCTM(ctx, cx, cy);
+        
+        CGRect ovalRect = CGRectMake(-rx, -ry, rx * 2.0, ry * 2.0);
+        
+        // Translucent red fill
+        CGContextSetRGBFillColor(ctx, 1.0, 0.15, 0.15, 0.40);
+        CGContextFillEllipseInRect(ctx, ovalRect);
+        
+        // Solid bright red border
+        CGContextSetRGBStrokeColor(ctx, 1.0, 0.1, 0.1, 0.95);
+        CGContextSetLineWidth(ctx, 2.5);
+        CGContextStrokeEllipseInRect(ctx, ovalRect);
+        
+        // Center crosshair
+        CGContextSetRGBStrokeColor(ctx, 1.0, 1.0, 1.0, 0.95);
+        CGContextSetLineWidth(ctx, 1.5);
+        CGFloat chSize = 14.0;
+        CGContextMoveToPoint(ctx, -chSize, 0);
+        CGContextAddLineToPoint(ctx, chSize, 0);
+        CGContextMoveToPoint(ctx, 0, -chSize);
+        CGContextAddLineToPoint(ctx, 0, chSize);
+        CGContextStrokePath(ctx);
+        
+        CGContextRestoreGState(ctx);
+        return;
+    }
+    
+    if (self.intensity <= 0.001) return;
+    
+    CGContextSaveGState(ctx);
+    CGContextTranslateCTM(ctx, cx, cy);
+    CGFloat scaleY = ry / rx;
+    CGContextScaleCTM(ctx, 1.0, scaleY);
+    
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    if (!colorSpace) {
+        CGContextRestoreGState(ctx);
+        return;
+    }
+    
+    // Color tint adjustments (-50.0 to +50.0)
+    CGFloat tint = self.colorTint;
+    CGFloat baseR = 0.0, baseG = 0.0, baseB = 0.0;
+    if (tint > 0.0) {
+        CGFloat factor = tint / 50.0;
+        baseR = 0.16 * factor;
+        baseG = 0.09 * factor;
+        baseB = 0.0;
+    } else if (tint < 0.0) {
+        CGFloat factor = (-tint) / 50.0;
+        baseR = 0.0;
+        baseG = 0.05 * factor;
+        baseB = 0.16 * factor;
+    }
+    
+    const int numStops = 11;
+    CGFloat locations[11];
+    CGFloat components[44];
+    
+    CGFloat maxAlpha = self.intensity;
+    CGFloat softness = self.softness;
+    if (softness < 0.1) softness = 0.1;
+    
+    for (int i = 0; i < numStops; i++) {
+        CGFloat t = (CGFloat)i / (CGFloat)(numStops - 1);
+        locations[i] = t;
+        
+        CGFloat cosVal = cos(t * (M_PI / 2.0));
+        CGFloat alphaFactor = pow(cosVal, 2.0 * softness);
+        CGFloat currentAlpha = maxAlpha * alphaFactor;
+        
+        components[i * 4 + 0] = baseR;
+        components[i * 4 + 1] = baseG;
+        components[i * 4 + 2] = baseB;
+        components[i * 4 + 3] = currentAlpha;
+    }
+    
+    CGGradientRef gradient = CGGradientCreateWithColorComponents(colorSpace, components, locations, numStops);
+    if (gradient) {
+        CGContextDrawRadialGradient(ctx, gradient, CGPointZero, 0.0, CGPointZero, rx, 0);
+        CGGradientRelease(gradient);
+    }
+    
+    CGColorSpaceRelease(colorSpace);
+    CGContextRestoreGState(ctx);
+}
+
+@end
+
 #pragma mark - SpotHealOverlayView
 
-@interface SpotHealOverlayView : UIView
+@interface SpotHealOverlayView : UIView {
+    SpotDefectDotView *_dotView;
+}
 @property (nonatomic, assign) BOOL isFilterEnabled;
 @property (nonatomic, assign) CGFloat offsetY;
 @property (nonatomic, assign) CGFloat offsetX;
@@ -33,6 +179,8 @@ static void reloadPreferences(void);
 @property (nonatomic, assign) CGFloat softness;
 @property (nonatomic, assign) CGFloat colorTint;
 @property (nonatomic, assign) BOOL highlightMode;
+
+- (void)updateDotLayout;
 @end
 
 @implementation SpotHealOverlayView
@@ -42,19 +190,27 @@ static void reloadPreferences(void);
     if (self) {
         self.backgroundColor = [UIColor clearColor];
         self.userInteractionEnabled = NO;
-        self.contentMode = UIViewContentModeRedraw;
         self.opaque = NO;
         
         // Defaults
-        self.isFilterEnabled = YES;
-        self.offsetY = 120.0;
-        self.offsetX = 0.0;
-        self.radiusX = 45.0;
-        self.radiusY = 45.0;
-        self.intensity = 0.12;
-        self.softness = 1.0;
-        self.colorTint = 0.0;
-        self.highlightMode = NO;
+        _isFilterEnabled = YES;
+        _offsetY = 120.0;
+        _offsetX = 0.0;
+        _radiusX = 45.0;
+        _radiusY = 45.0;
+        _intensity = 0.12;
+        _softness = 1.0;
+        _colorTint = 0.0;
+        _highlightMode = NO;
+        
+        _dotView = [[SpotDefectDotView alloc] initWithFrame:CGRectZero];
+        _dotView.radiusX = _radiusX;
+        _dotView.radiusY = _radiusY;
+        _dotView.intensity = _intensity;
+        _dotView.softness = _softness;
+        _dotView.colorTint = _colorTint;
+        _dotView.highlightMode = _highlightMode;
+        [self addSubview:_dotView];
     }
     return self;
 }
@@ -72,88 +228,92 @@ static void reloadPreferences(void);
 - (void)setIsFilterEnabled:(BOOL)enabled {
     if (_isFilterEnabled != enabled) {
         _isFilterEnabled = enabled;
-        [self setNeedsDisplay];
+        _dotView.hidden = !enabled;
+        [self updateDotLayout];
     }
 }
 
 - (void)setOffsetY:(CGFloat)offsetY {
     if (fabs(_offsetY - offsetY) > 0.01) {
         _offsetY = offsetY;
-        [self setNeedsDisplay];
+        [self updateDotLayout];
     }
 }
 
 - (void)setOffsetX:(CGFloat)offsetX {
     if (fabs(_offsetX - offsetX) > 0.01) {
         _offsetX = offsetX;
-        [self setNeedsDisplay];
+        [self updateDotLayout];
     }
 }
 
 - (void)setRadiusX:(CGFloat)radiusX {
     if (fabs(_radiusX - radiusX) > 0.01) {
         _radiusX = radiusX;
-        [self setNeedsDisplay];
+        [self updateDotLayout];
     }
 }
 
 - (void)setRadiusY:(CGFloat)radiusY {
     if (fabs(_radiusY - radiusY) > 0.01) {
         _radiusY = radiusY;
-        [self setNeedsDisplay];
+        [self updateDotLayout];
     }
 }
 
 - (void)setIntensity:(CGFloat)intensity {
     if (fabs(_intensity - intensity) > 0.001) {
         _intensity = intensity;
-        [self setNeedsDisplay];
+        _dotView.intensity = intensity;
+        [_dotView setNeedsDisplay];
     }
 }
 
 - (void)setSoftness:(CGFloat)softness {
     if (fabs(_softness - softness) > 0.01) {
         _softness = softness;
-        [self setNeedsDisplay];
+        _dotView.softness = softness;
+        [_dotView setNeedsDisplay];
     }
 }
 
 - (void)setColorTint:(CGFloat)colorTint {
     if (fabs(_colorTint - colorTint) > 0.01) {
         _colorTint = colorTint;
-        [self setNeedsDisplay];
+        _dotView.colorTint = colorTint;
+        [_dotView setNeedsDisplay];
     }
 }
 
 - (void)setHighlightMode:(BOOL)highlightMode {
     if (_highlightMode != highlightMode) {
         _highlightMode = highlightMode;
-        [self setNeedsDisplay];
+        _dotView.highlightMode = highlightMode;
+        [_dotView setNeedsDisplay];
     }
 }
 
 - (void)setFrame:(CGRect)frame {
-    BOOL changed = !CGSizeEqualToSize(self.frame.size, frame.size);
     [super setFrame:frame];
-    if (changed) [self setNeedsDisplay];
+    [self updateDotLayout];
 }
 
 - (void)setBounds:(CGRect)bounds {
-    BOOL changed = !CGSizeEqualToSize(self.bounds.size, bounds.size);
     [super setBounds:bounds];
-    if (changed) [self setNeedsDisplay];
+    [self updateDotLayout];
 }
 
 - (void)layoutSubviews {
     [super layoutSubviews];
-    [self setNeedsDisplay];
+    [self updateDotLayout];
 }
 
-- (void)drawRect:(CGRect)rect {
-    (void)rect;
-    if (!self.isFilterEnabled) {
+- (void)updateDotLayout {
+    if (!_isFilterEnabled) {
+        _dotView.hidden = YES;
         return;
     }
+    _dotView.hidden = NO;
     
     CGRect bounds = self.bounds;
     CGFloat W = bounds.size.width;
@@ -185,7 +345,7 @@ static void reloadPreferences(void);
     }
     
     // Physical coordinate mapping:
-    // Pin the defect to the physical position above the Home button across all rotations.
+    // Pin defect to physical position above Home button across all rotations.
     CGFloat cx = 0;
     CGFloat cy = 0;
     CGFloat effectiveRadiusX = self.radiusX;
@@ -194,7 +354,6 @@ static void reloadPreferences(void);
     switch (orientation) {
         case UIInterfaceOrientationPortrait:
         default:
-            // Home button at physical bottom
             cx = W / 2.0 + self.offsetX;
             cy = H - self.offsetY;
             effectiveRadiusX = self.radiusX;
@@ -202,7 +361,6 @@ static void reloadPreferences(void);
             break;
             
         case UIInterfaceOrientationPortraitUpsideDown:
-            // Home button at physical top
             cx = W / 2.0 - self.offsetX;
             cy = self.offsetY;
             effectiveRadiusX = self.radiusX;
@@ -210,7 +368,6 @@ static void reloadPreferences(void);
             break;
             
         case UIInterfaceOrientationLandscapeRight:
-            // Home button on the right
             cx = W - self.offsetY;
             cy = H / 2.0 - self.offsetX;
             effectiveRadiusX = self.radiusY;
@@ -218,7 +375,6 @@ static void reloadPreferences(void);
             break;
             
         case UIInterfaceOrientationLandscapeLeft:
-            // Home button on the left
             cx = self.offsetY;
             cy = H / 2.0 + self.offsetX;
             effectiveRadiusX = self.radiusY;
@@ -229,106 +385,18 @@ static void reloadPreferences(void);
     if (effectiveRadiusX <= 1.0) effectiveRadiusX = 1.0;
     if (effectiveRadiusY <= 1.0) effectiveRadiusY = 1.0;
     
-    CGContextRef ctx = UIGraphicsGetCurrentContext();
-    if (!ctx) return;
+    CGSize targetSize = CGSizeMake(ceil(effectiveRadiusX * 2.0) + 2.0, ceil(effectiveRadiusY * 2.0) + 2.0);
+    CGPoint targetCenter = CGPointMake(round(cx), round(cy));
     
-    if (self.highlightMode) {
-        // --- Alignment Mode: Bright translucent red oval + crosshair for visual positioning ---
-        CGContextSaveGState(ctx);
-        CGContextTranslateCTM(ctx, cx, cy);
-        
-        CGRect ovalRect = CGRectMake(-effectiveRadiusX, -effectiveRadiusY, effectiveRadiusX * 2.0, effectiveRadiusY * 2.0);
-        
-        // Translucent red fill
-        CGContextSetRGBFillColor(ctx, 1.0, 0.15, 0.15, 0.40);
-        CGContextFillEllipseInRect(ctx, ovalRect);
-        
-        // Solid bright red border
-        CGContextSetRGBStrokeColor(ctx, 1.0, 0.1, 0.1, 0.95);
-        CGContextSetLineWidth(ctx, 2.5);
-        CGContextStrokeEllipseInRect(ctx, ovalRect);
-        
-        // Center crosshair
-        CGContextSetRGBStrokeColor(ctx, 1.0, 1.0, 1.0, 0.95);
-        CGContextSetLineWidth(ctx, 1.5);
-        CGFloat chSize = 14.0;
-        CGContextMoveToPoint(ctx, -chSize, 0);
-        CGContextAddLineToPoint(ctx, chSize, 0);
-        CGContextMoveToPoint(ctx, 0, -chSize);
-        CGContextAddLineToPoint(ctx, 0, chSize);
-        CGContextStrokePath(ctx);
-        
-        CGContextRestoreGState(ctx);
-        return;
+    BOOL sizeChanged = !CGSizeEqualToSize(_dotView.bounds.size, targetSize);
+    _dotView.center = targetCenter;
+    
+    if (sizeChanged || fabs(_dotView.radiusX - effectiveRadiusX) > 0.01 || fabs(_dotView.radiusY - effectiveRadiusY) > 0.01) {
+        _dotView.bounds = CGRectMake(0, 0, targetSize.width, targetSize.height);
+        _dotView.radiusX = effectiveRadiusX;
+        _dotView.radiusY = effectiveRadiusY;
+        [_dotView setNeedsDisplay];
     }
-    
-    // --- Normal Subtractive Luminance Mask ---
-    if (self.intensity <= 0.001) {
-        return;
-    }
-    
-    CGContextSaveGState(ctx);
-    
-    // Transform coordinate system so ellipse becomes a unit circle centered at (0, 0)
-    CGContextTranslateCTM(ctx, cx, cy);
-    CGFloat scaleY = effectiveRadiusY / effectiveRadiusX;
-    CGContextScaleCTM(ctx, 1.0, scaleY);
-    
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    if (!colorSpace) {
-        CGContextRestoreGState(ctx);
-        return;
-    }
-    
-    // Color tint adjustments (-50.0 to +50.0)
-    CGFloat tint = self.colorTint;
-    CGFloat baseR = 0.0, baseG = 0.0, baseB = 0.0;
-    if (tint > 0.0) {
-        // Warmer amber/brownish dark tint
-        CGFloat factor = tint / 50.0;
-        baseR = 0.16 * factor;
-        baseG = 0.09 * factor;
-        baseB = 0.0;
-    } else if (tint < 0.0) {
-        // Cooler slate/blueish dark tint
-        CGFloat factor = (-tint) / 50.0;
-        baseR = 0.0;
-        baseG = 0.05 * factor;
-        baseB = 0.16 * factor;
-    }
-    
-    const int numStops = 11;
-    CGFloat locations[11];
-    CGFloat components[44]; // 11 stops * 4 components
-    
-    CGFloat maxAlpha = self.intensity;
-    CGFloat softness = self.softness;
-    if (softness < 0.1) softness = 0.1;
-    
-    for (int i = 0; i < numStops; i++) {
-        CGFloat t = (CGFloat)i / (CGFloat)(numStops - 1); // 0.0 to 1.0
-        locations[i] = t;
-        
-        // Smooth cosine falloff modulated by softness
-        CGFloat cosVal = cos(t * (M_PI / 2.0));
-        CGFloat alphaFactor = pow(cosVal, 2.0 * softness);
-        CGFloat currentAlpha = maxAlpha * alphaFactor;
-        
-        components[i * 4 + 0] = baseR;
-        components[i * 4 + 1] = baseG;
-        components[i * 4 + 2] = baseB;
-        components[i * 4 + 3] = currentAlpha;
-    }
-    
-    CGGradientRef gradient = CGGradientCreateWithColorComponents(colorSpace, components, locations, numStops);
-    if (gradient) {
-        // Draw strictly inside radial boundary (no bleed outside radius)
-        CGContextDrawRadialGradient(ctx, gradient, CGPointZero, 0.0, CGPointZero, effectiveRadiusX, 0);
-        CGGradientRelease(gradient);
-    }
-    
-    CGColorSpaceRelease(colorSpace);
-    CGContextRestoreGState(ctx);
 }
 
 @end
@@ -394,7 +462,7 @@ static void reloadPreferences(void);
     if (self.overlayView) {
         self.overlayView.frame = self.view.bounds;
         self.overlayView.bounds = self.view.bounds;
-        [self.overlayView setNeedsDisplay];
+        [self.overlayView updateDotLayout];
     }
 }
 
@@ -403,7 +471,7 @@ static void reloadPreferences(void);
     if (self.overlayView) {
         self.overlayView.frame = self.view.bounds;
         self.overlayView.bounds = self.view.bounds;
-        [self.overlayView setNeedsDisplay];
+        [self.overlayView updateDotLayout];
     }
 }
 
@@ -427,7 +495,7 @@ static void reloadPreferences(void);
     if (self.overlayView) {
         self.overlayView.frame = newBounds;
         self.overlayView.bounds = newBounds;
-        [self.overlayView setNeedsDisplay];
+        [self.overlayView updateDotLayout];
     }
     if (coordinator) {
         [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
@@ -438,7 +506,7 @@ static void reloadPreferences(void);
             if (self.overlayView) {
                 self.overlayView.frame = animBounds;
                 self.overlayView.bounds = animBounds;
-                [self.overlayView setNeedsDisplay];
+                [self.overlayView updateDotLayout];
             }
         } completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
             (void)context;
@@ -539,7 +607,7 @@ static void reloadPreferences(void);
     if (gOverlayVC && gOverlayVC.overlayView) {
         gOverlayVC.overlayView.frame = self.bounds;
         gOverlayVC.overlayView.bounds = self.bounds;
-        [gOverlayVC.overlayView setNeedsDisplay];
+        [gOverlayVC.overlayView updateDotLayout];
     }
 }
 
@@ -642,7 +710,7 @@ static void updateWindowFrames(void) {
         if (gOverlayVC.overlayView) {
             gOverlayVC.overlayView.frame = screenBounds;
             gOverlayVC.overlayView.bounds = screenBounds;
-            [gOverlayVC.overlayView setNeedsDisplay];
+            [gOverlayVC.overlayView updateDotLayout];
         }
     }
 }
@@ -805,7 +873,7 @@ static void reloadPreferences(void) {
         gOverlayVC.overlayView.softness = softness;
         gOverlayVC.overlayView.colorTint = colorTint;
         gOverlayVC.overlayView.highlightMode = highlightMode;
-        [gOverlayVC.overlayView setNeedsDisplay];
+        [gOverlayVC.overlayView updateDotLayout];
     }
     if (gOverlayWindow) {
         gOverlayWindow.hidden = !enabled;
@@ -1060,12 +1128,6 @@ static void initSpringBoard(void) {
                                                   usingBlock:^(NSNotification *note) {
         (void)note;
         updateWindowFrames();
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            updateWindowFrames();
-        });
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            updateWindowFrames();
-        });
     }];
     
 #pragma clang diagnostic push
@@ -1076,12 +1138,6 @@ static void initSpringBoard(void) {
                                                   usingBlock:^(NSNotification *note) {
         (void)note;
         updateWindowFrames();
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            updateWindowFrames();
-        });
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            updateWindowFrames();
-        });
     }];
 #pragma clang diagnostic pop
     
