@@ -1,7 +1,7 @@
-# SpotHeal 🩹
+# SpotHeal
 
 **Subtractive Luminance Compensation Mask for iPad Display Hotspots**  
-*Targeted hardware defect elimination for iPad Pro 10.5" (2017), iPad Air 3, and all iOS devices.*
+*Targeted optical defect elimination for iPad Pro 10.5" (2017), iPad Air 3, and iOS laminated displays.*
 
 ![iOS 12.0 - 18+](https://img.shields.io/badge/iOS-12.0--18%2B-blue?style=flat-square)
 ![Architecture](https://img.shields.io/badge/Architecture-arm64%20%7C%20arm64e-success?style=flat-square)
@@ -10,146 +10,145 @@
 
 ---
 
-## 📌 Background: The "White Spot" Defect
+## Background: Hardware Hotspot Defect
 
-A notorious hardware flaw affecting the **iPad Pro 10.5-inch (2017)** and **iPad Air 3rd Gen** is the sudden appearance of an unevenly bright "white spot" (hotspot) located approximately 1–2 inches directly above the physical Home button. 
+A prevalent hardware defect affecting the iPad Pro 10.5-inch (2017) and iPad Air (3rd generation) is the formation of a localized, unevenly bright luminance hotspot situated roughly 1 to 2 inches directly above the physical Home button.
 
-### Why Does It Happen?
-The defect is physical: internal motherboard power connectors and battery tabs sit right beneath the display assembly. Over years of thermal cycles and handling pressure, these components press against the LCD backlight diffuser sheets, creating micro-deformation. This deformation concentrates light output, causing a localized zone with higher luminance ($\Delta L > 0$) that glares distractingly on white backgrounds, documents, websites, and drawing canvases.
+### Root Cause
+The defect originates from internal mechanical pressure:
+1. **Component Positioning**: Motherboard logic connectors and battery contact tabs sit directly beneath the display assembly in this specific region.
+2. **Thermal and Pressure Cycling**: Repeated thermal expansion, combined with normal handling pressure, causes these internal structures to press into the optical backlight diffuser sheets.
+3. **Diffuser Deformation**: Micro-deformations in the reflective diffuser concentrate backlight photon scatter, creating an area of elevated luminance (Delta L > 0) that is visibly distracting against light backgrounds, documents, and canvas applications.
 
-Replacing the screen is costly, and replacement panels often develop the exact same flaw over time.
-
----
-
-## 💡 The Solution: How SpotHeal Works
-
-SpotHeal solves the problem entirely in software through **optical subtractive luminance masking**:
-
-1. **Subtractive Masking**:  
-   An inverse elliptical radial gradient is projected precisely over the hotspot at the `SpringBoard` compositor level. By attenuating display pixels in the defect zone by the exact excess percentage of light emitted by the backlight, the combined perceived luminance matches the surrounding screen surface. On white backgrounds, the spot completely vanishes.
-2. **True Contrast Preservation**:  
-   Because the mask is subtractive and non-opaque, dark and black pixels remain completely untouched. Dark mode contrast and movie viewing are 100% preserved.
-3. **Hardware-Locked Physical Rotation Tracking**:  
-   The physical hotspot remains fixed to the LCD panel above the Home button regardless of how the iPad is oriented. SpotHeal continuously observes `UIWindowScene` interface orientation and calculates coordinate transformation matrices for all 4 device orientations:
-   - **Portrait** (Home button bottom): Pinned near screen bottom.
-   - **Portrait Upside Down** (Home button top): Pinned near screen top.
-   - **Landscape Right** (Home button right): Pinned near screen right edge.
-   - **Landscape Left** (Home button left): Pinned near screen left edge.  
-   The ellipse axes ($R_x$ and $R_y$) rotate in tandem with the physical defect geometry.
+Panel replacements are financially inefficient, and replacement assemblies typically develop identical deformation over extended use.
 
 ---
 
-## ✨ Features
+## Technical Approach: Subtractive Luminance Attenuation
 
-- 🎯 **Alignment Mode (Highlight Mask)**:
-  Toggling this switch turns the mask into a high-visibility translucent red oval with a center crosshair, allowing you to position the mask right over the defect in seconds.
-- ⬜ **Test on White Screen**:
-  An instant full-screen calibration canvas inside Settings. Tap anywhere to dismiss and verify if the spot has disappeared against a pure white background.
-- 📐 **Granular Position & Shape Controls**:
-  - **Distance from Home Button (Y Offset)**: `20` to `350 pt` (default `120 pt`).
-  - **Horizontal Shift (X Offset)**: `-150` to `+150 pt` (to compensate for off-center spots).
-  - **Spot Width & Height (Radius X & Y)**: `10` to `200 pt` (independent axis scaling).
-- 🎚️ **Luminance & Optical Matching**:
-  - **Darkening Intensity**: `1.0%` to `40.0%` (optical attenuation factor).
-  - **Edge Softness**: `0.5` to `2.5` (smooth cosine falloff feathering exponent).
-  - **Color Tint**: `-50` (Cool Slate) to `+50` (Warm Amber) balance adjustment for chromatic backlight shifts.
-- ⚡ **Real-Time Bidirectional Sync**:
-  Dragging any slider updates the companion numerical text box and the SpringBoard overlay live in real time. You can also type exact numbers directly.
-- 📸 **Clean Screenshot Capture**:
-  Hooks into `SBScreenshotManager`, `SSScreenCapturer`, and `SBScreenFlash` to hide the mask during screen captures and recordings. Your screenshots remain pristine and defect-free.
-- 👆 **Transparent Touch Pass-Through**:
-  Implements `- (BOOL)_ignoresHitTest` and `userInteractionEnabled = NO` on a dedicated container window (`UIWindowLevelStatusBar + 50.0`). Zero interference with touches, Apple Pencil, or system gestures.
+SpotHeal neutralizes the hotspot purely in software at the compositor level through inverse radial luminance attenuation:
+
+```
+[ Localized Backlight Hotspot: +Delta L ] + [ SpotHeal Inverse Radial Mask: -Delta L ] = [ Uniform Luminance Surface ]
+```
+
+1. **Subtractive Radial Masking**:  
+   An inverse elliptical gradient mask is composited directly above the physical defect inside the `SpringBoard` render tree. By attenuating pixel values within the hotspot perimeter by the precise excess percentage emitted by the diffuser deformation, perceived luminance matches the surrounding screen surface. On uniform white backgrounds, the defect is eliminated.
+2. **Preservation of Contrast and Dynamic Range**:  
+   Because the attenuation is non-opaque and subtractive, black levels and dark mode interfaces remain untouched. Video playback and dark media retain full dynamic range.
+3. **Physical Hardware Rotation Tracking**:  
+   The physical deformation remains stationary relative to the Home button regardless of software orientation. SpotHeal observes `UIWindowScene` interface orientation events and calculates transformation matrices across all four device orientations:
+   - **Portrait** (Home button at bottom): Pinned to lower screen quadrant.
+   - **Portrait Upside Down** (Home button at top): Pinned to upper screen quadrant.
+   - **Landscape Right** (Home button on right): Pinned to right screen margin.
+   - **Landscape Left** (Home button on left): Pinned to left screen margin.  
+   The elliptical axes ($R_x$ and $R_y$) rotate in hardware space to preserve the physical defect geometry.
 
 ---
 
-## 🚀 Installation
+## Features
+
+- **Alignment Mode (Calibration Overlay)**: Toggles a high-visibility translucent red ellipse with an optical crosshair, allowing exact spatial alignment over the defect center.
+- **Full-Screen White Canvas Test**: Built-in full-screen uniform white verification canvas within Settings to confirm complete neutralization. Tap anywhere to dismiss.
+- **Granular Position and Geometry Controls**:
+  - **Distance from Home Button (Y Offset)**: 20 pt to 350 pt (nominal default: 120 pt).
+  - **Horizontal Shift (X Offset)**: -150 pt to +150 pt for off-center alignment.
+  - **Ellipse Radii (Radius X and Radius Y)**: 10 pt to 200 pt independent dual-axis scaling.
+- **Optical Matching Parameters**:
+  - **Darkening Intensity**: 1.0% to 40.0% precision attenuation factor.
+  - **Edge Softness**: 0.5 to 2.5 smooth falloff exponent to prevent perimeter halos.
+  - **Color Tint Adjustment**: -50 (Cool Slate) to +50 (Warm Amber) chromatic compensation for backlight tint shifts.
+- **Bidirectional Control Synchronization**: Direct live synchronization between Settings text fields, sliders, and the SpringBoard compositor window.
+- **Clean Screenshot Interception**: Intercepts `SSScreenCapturer`, `SBScreenshotManager`, and `SBScreenFlash` to automatically dismiss the mask during screenshots, keeping captured images unblemished.
+- **Zero Input Latency**: Operates inside a non-interactive overlay window (`UIWindowLevelStatusBar + 50.0`) implementing `_ignoresHitTest` and `userInteractionEnabled = NO`. Zero interference with touches, Apple Pencil, or system gestures.
+
+---
+
+## Installation
 
 ### Requirements
-- **Device**: Any iPad or iPhone suffering from localized display hotspots (specifically tested on iPad Pro 10.5" 2017).
-- **Firmware**: iOS 12.0 up to iOS 18+.
-- **Jailbreak**: Dopamine, palera1n, XinaA15, unc0ver, checkra1n, Taurine, etc.
-- **Dependencies**: `mobilesubstrate` (or ElleKit), `preferenceloader`.
+- **Hardware**: iPad Pro 10.5" (2017), iPad Air 3, or any iOS device with localized backlight hotspots.
+- **Firmware**: iOS/iPadOS 12.0 up to iOS/iPadOS 18.x.
+- **Jailbreak**: Dopamine, palera1n, XinaA15, checkra1n, unc0ver, Taurine.
+- **Dependencies**: `preferenceloader`, `mobilesubstrate` (or ElleKit).
 
-### Package Manager (Sileo / Zebra / Filza)
-1. Download the appropriate `.deb` for your jailbreak environment:
+### Package Deployment
+1. Download the Debian package matching your bootstrap:
    - **Rootless (Dopamine / palera1n rootless):**  
      `com.ronci.spotheal_1.0.0_iphoneos-arm64.deb`
    - **Rootful (checkra1n / unc0ver / Taurine):**  
      `com.ronci.spotheal_1.0.0_iphoneos-arm.deb`
-2. Open in **Sileo** / **Zebra** / **Filza** and tap **Install**.
-3. Respring your device.
+2. Install via Sileo, Zebra, or Filza.
+3. Perform a respring.
 
 ---
 
-## 🛠️ Step-by-Step Calibration Guide
+## Calibration Guide
 
-1. Open **Settings ➔ SpotHeal**.
-2. Switch **Enabled** to `ON`.
-3. Switch **Highlight Mask (Red)** to `ON`. A red oval with a crosshair target will appear on your screen.
-4. Adjust **Distance from Home Button (Y Offset)** and **Horizontal Shift (X Offset)** until the white crosshair sits directly in the center of your display's white spot.
-5. Adjust **Spot Width (Radius X)** and **Spot Height (Radius Y)** until the red ellipse matches the shape of the hotspot.
-6. Switch **Highlight Mask (Red)** back to `OFF`.
-7. Tap **Test on White Screen** to enter the pure white testing canvas:
-   - If the spot is still brighter than the surroundings: increase **Darkening Intensity**.
-   - If the spot looks like a dark smudge: decrease **Darkening Intensity**.
-   - If the edges of the spot are noticeable: increase **Edge Softness**.
-   - If the spot has a slight blue or yellow fringe: tune **Color Tint**.
-8. Tap anywhere on screen to return to Settings. Your calibration is saved permanently across resprings and reboots!
+1. Open **Settings -> SpotHeal**.
+2. Toggle **Enabled** to active.
+3. Toggle **Highlight Mask (Red)** to active. A red target oval with a center crosshair will appear on the display.
+4. Adjust **Distance from Home Button (Y Offset)** and **Horizontal Shift (X Offset)** until the crosshair aligns with the center of the hotspot.
+5. Scale **Spot Width (Radius X)** and **Spot Height (Radius Y)** until the ellipse boundaries encompass the defect area.
+6. Toggle **Highlight Mask (Red)** to inactive.
+7. Tap **Test on White Screen** to enter the pure white inspection canvas:
+   - If the hotspot is still brighter than surrounding pixels: increase **Darkening Intensity**.
+   - If a dark shadow is visible: decrease **Darkening Intensity**.
+   - If boundary lines are perceptible: increase **Edge Softness**.
+   - If the area displays chromatic aberration: tune **Color Tint**.
+8. Tap anywhere on the canvas to exit. Calibration parameters persist across resprings and reboots.
 
 ---
 
-## 🏗️ Building from Source
+## Compilation and Packaging
 
-To compile the Fat Mach-O binaries (`arm64` + `arm64e`) and package both rootless and rootful Debian archives:
+To compile fat Mach-O binaries (`arm64` + `arm64e`) and generate both rootless and rootful Debian packages:
 
 ```bash
-# Clone or navigate to the repository
 cd SpotHeal
-
-# Ensure build script is executable
 chmod +x build.sh
-
-# Run compilation & packaging
 ./build.sh
 ```
 
-The script compiles:
-- `SpotHeal.dylib`: SpringBoard dynamic library signed with `ldid -S`.
-- `SpotHeal`: PreferenceBundle Mach-O bundle linked with `Preferences.tbd`.
-- Generates high-resolution multi-scale preference icons.
-- Stages and outputs `com.ronci.spotheal_1.0.0_iphoneos-arm64.deb` and `com.ronci.spotheal_1.0.0_iphoneos-arm.deb` to your `Downloads` directory.
+Pipeline tasks:
+1. Compiles `SpotHeal.dylib` for `SpringBoard` with entitlement signing via `ldid -S`.
+2. Compiles the `SpotHeal` PreferenceBundle against the private Preferences framework.
+3. Generates multi-scale application icons.
+4. Packages `com.ronci.spotheal_1.0.0_iphoneos-arm64.deb` and `com.ronci.spotheal_1.0.0_iphoneos-arm.deb`.
 
 ---
 
-## 📂 Project Structure
+## Repository Structure
 
 ```
 SpotHeal/
-├── build.sh                                # Fat compiler & dual-package builder
-├── README.md                               # Documentation
+├── build.sh                                # Automated build script
+├── README.md                               # Technical documentation
+├── com.ronci.spotheal_1.0.0_iphoneos-arm.deb   # Pre-compiled rootful package
+├── com.ronci.spotheal_1.0.0_iphoneos-arm64.deb # Pre-compiled rootless package
 └── src/
-    ├── SpotHeal.m                          # SpringBoard hook, rotation math & gradient drawing
-    ├── SpotHeal.plist                      # MobileSubstrate filter (com.apple.springboard)
+    ├── SpotHeal.m                          # SpringBoard hook and rotation transform engine
+    ├── SpotHeal.plist                      # MobileSubstrate filter
     └── pref_bundle/
-        ├── Preferences.tbd                 # Linker stub for Preferences.framework
-        ├── SpotHealRootListController.h    # Native Settings list controller header
-        ├── SpotHealRootListController.m    # Bidirectional slider sync & white test canvas
+        ├── Preferences.tbd                 # Private framework linker stub
+        ├── SpotHealRootListController.h    # Settings list controller interface
+        ├── SpotHealRootListController.m    # Slider synchronization and canvas controller
         └── Resources/
-            ├── Info.plist                  # Bundle identification
-            ├── Root.plist                  # Specifier schema definition
-            ├── entry.plist                 # PreferenceLoader entry configuration
-            └── icon*.png                   # High-DPI Settings icons
+            ├── Info.plist                  # Bundle property list
+            ├── Root.plist                  # Settings specifier layout
+            ├── entry.plist                 # PreferenceLoader registration
+            └── icon*.png                   # High-resolution preference icons
 ```
 
 ---
 
-## 👤 Author
+## Author
 
-- **Developer**: Ronci
-- **Compatibility**: iPad Pro 10.5" (2017) • iPad Air 3 • iOS 12.0 – 18+
+- **Developer**: Ronald Nedela ([@RonaldNedela](https://github.com/RonaldNedela))
+- **Target Platform**: iPad Pro 10.5" (2017), iPad Air 3, iOS/iPadOS 12.0 - 18+
 
 ---
 
-## 📄 License
+## License
 
-This project is licensed under the MIT License - feel free to modify, distribute, and integrate.
+This project is licensed under the MIT License.
